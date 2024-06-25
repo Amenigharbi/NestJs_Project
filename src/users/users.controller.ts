@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post,Res} from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post,Res, UsePipes, ValidationPipe} from "@nestjs/common";
 import { createUser } from "./dtos/createUser.dto";
 import { UpdateUser } from "./dtos/updateUser.dto";
 import { UserEntity } from "./user.entity";
 import{v4 as uuid} from 'uuid';
+
 @Controller("users")
 export class UsersController{
     private users:UserEntity[]=[];
@@ -13,12 +14,13 @@ export class UsersController{
     }
 
     @Get(":id")
-    findOne(@Param("id")id:string):UserEntity{
+    findOne(@Param("id",ParseUUIDPipe)id:string):UserEntity{
+        console.log(typeof id);
         return this.users.find((user) => user.id===id);
     }
 
     @Post()
-    Create(@Body()userData:createUser){
+    Create(@Body(new ValidationPipe({groups:['create']}))userData:createUser){
         const newUser:UserEntity={
             ... userData,
             id:uuid(),
@@ -28,7 +30,7 @@ export class UsersController{
     }
 
     @Patch(":id")
-    Update(@Param("id") id:string, @Body() data:UpdateUser){
+    Update(@Param("id",ParseUUIDPipe) id:string, @Body(new ValidationPipe({groups:['update']})) data:UpdateUser){
         //1-find the element index that we want to update
         const index=this.users.findIndex((user)=>user.id===id);
         //2-update this element
@@ -38,7 +40,7 @@ export class UsersController{
 
     @Delete(":id")
     @HttpCode(HttpStatus.NO_CONTENT)
-    Remove(@Param("id") id:string){
+    Remove(@Param("id",ParseUUIDPipe) id:string){
         this.users=this.users.filter((user)=>user.id != id);
     }
 }
