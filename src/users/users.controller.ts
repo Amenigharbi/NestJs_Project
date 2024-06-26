@@ -1,8 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post,Query,Res, UsePipes, ValidationPipe} from "@nestjs/common";
-import { createUser } from "./dtos/createUser.dto";
+import { CreateUserDto } from "./dtos/createUser.dto";
 import { UpdateUser } from "./dtos/updateUser.dto";
-import { UserEntity } from "./user.entity";
-import{v4 as uuid} from 'uuid';
+import { User } from "./user.entity";
 import { CustomValidationPipe } from "./pipes/validation.pipe";
 import { UserService } from "./user.service";
 
@@ -13,28 +12,30 @@ export class UsersController{
     constructor(private readonly userService:UserService){}
 
     @Get()
-    find(@Query("username",CustomValidationPipe)username:string):UserEntity[]{
-        return this.userService.findUsers()
-    }
+  async find(@Query("username", CustomValidationPipe) username: string): Promise<User[]> {
+    return await this.userService.findUsers();
+  }
 
-    @Get(":id")
-    findOne(@Param("id",ParseUUIDPipe)id:string):UserEntity{
-        return this.userService.findUserById(id);
-    }
+  @Get(":id")
+  async findOne(@Param("id") id: string): Promise<User> {
+    return await this.userService.findUserById(id);
+  }
 
-    @Post()
-    Create(@Body(new ValidationPipe({groups:['create']}))userData:createUser){
-        return this.userService.CreateUser(userData);    
-    }
+  @Post()
+  @UsePipes(new ValidationPipe({ groups: ['create'] }))
+  async create(@Body() userData: CreateUserDto): Promise<User> {
+    return await this.userService.createUser(userData);
+  }
 
-    @Patch(":id")
-    Update(@Param("id",ParseUUIDPipe) id:string, @Body(new ValidationPipe({groups:['update']})) data:UpdateUser){
-        return this.userService.updateUser(id,data);
-    }
+  @Patch(":id")
+  @UsePipes(new ValidationPipe({ groups: ['update'] }))
+  async update(@Param("id") id: string, @Body() data: UpdateUser): Promise<User> {
+    return await this.userService.updateUser(id, data);
+  }
 
-    @Delete(":id")
-    @HttpCode(HttpStatus.NO_CONTENT)
-    Remove(@Param("id",ParseUUIDPipe) id:string){
-        return this.userService.deleteUser(id);
-    }
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param("id") id: string): Promise<void> {
+    await this.userService.deleteUser(id);
+  }
 }
